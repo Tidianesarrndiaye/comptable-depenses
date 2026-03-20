@@ -112,6 +112,8 @@
             </div>
             <div class="actions">
                 <a class="primary" href="{% url 'expenses:entry-create' %}">Ajouter une entree</a>
+                <a href="{% url 'expenses:entry-export-csv' %}?{{ active_query }}">Exporter CSV</a>
+                <a href="{% url 'expenses:entry-export-excel' %}?{{ active_query }}">Exporter Excel</a>
                 <a href="{% url 'expenses:template-create' %}">Modeles recurrents</a>
                 <a href="{% url 'expenses:home' %}">Accueil</a>
             </div>
