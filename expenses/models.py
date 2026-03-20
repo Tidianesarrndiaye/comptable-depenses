@@ -30,6 +30,13 @@ class EntryStatus(models.TextChoices):
 	VALIDATED = 'validated', 'Validee'
 
 
+class Currency(models.TextChoices):
+	MAD = 'MAD', 'MAD - Dirham marocain'
+	EUR = 'EUR', 'EUR - Euro'
+	USD = 'USD', 'USD - Dollar americain'
+	XOF = 'XOF', 'XOF - Franc CFA'
+
+
 class ExpenseSheet(models.Model):
 	owner = models.ForeignKey(
 		settings.AUTH_USER_MODEL,
@@ -39,6 +46,7 @@ class ExpenseSheet(models.Model):
 		related_name='expense_sheets',
 	)
 	name = models.CharField(max_length=150)
+	currency = models.CharField(max_length=3, choices=Currency.choices, default=Currency.MAD)
 	starting_balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
 	is_active = models.BooleanField(default=True)
 	created_at = models.DateTimeField(auto_now_add=True)

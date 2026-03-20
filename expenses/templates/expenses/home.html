@@ -113,6 +113,37 @@
             color: #fffaf4;
         }
 
+        .danger-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid #9f2a2a;
+            background: #fff5f5;
+            color: #9f2a2a;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .edit-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--accent);
+            background: #f2fbf8;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
         .pill {
             display: inline-block;
             padding: 6px 10px;
@@ -267,14 +298,17 @@
             <article class="card">
                 <span>Revenus valides</span>
                 <strong>{{ financial_summary.income_total }}</strong>
+                <small>Totaux affiches en {% if dashboard_currency_hint == 'MULTI' %}multi-devise{% else %}{{ dashboard_currency_hint }}{% endif %}</small>
             </article>
             <article class="card">
                 <span>Depenses validees</span>
                 <strong>{{ financial_summary.expense_total }}</strong>
+                <small>Totaux affiches en {% if dashboard_currency_hint == 'MULTI' %}multi-devise{% else %}{{ dashboard_currency_hint }}{% endif %}</small>
             </article>
             <article class="card">
                 <span>Net valide</span>
                 <strong>{{ financial_summary.net_total }}</strong>
+                <small>Totaux affiches en {% if dashboard_currency_hint == 'MULTI' %}multi-devise{% else %}{{ dashboard_currency_hint }}{% endif %}</small>
             </article>
         </section>
 
@@ -289,18 +323,30 @@
                     <thead>
                         <tr>
                             <th>Nom</th>
+                            <th>Devise</th>
                             <th>Solde initial</th>
                             <th>Solde courant</th>
                             <th>Entrees</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for sheet in latest_sheets %}
                             <tr>
                                 <td>{{ sheet.name }}</td>
-                                <td>{{ sheet.starting_balance }}</td>
-                                <td>{{ sheet.current_balance }}</td>
+                                <td>{{ sheet.currency }}</td>
+                                <td>{{ sheet.starting_balance }} {{ sheet.currency }}</td>
+                                <td>{{ sheet.current_balance }} {{ sheet.currency }}</td>
                                 <td>{{ sheet.entry_total }}</td>
+                                <td>
+                                    <div class="action-row">
+                                        <a class="edit-link" href="{% url 'expenses:sheet-update' sheet.pk %}">Modifier</a>
+                                        <form method="post" action="{% url 'expenses:sheet-delete' sheet.pk %}">
+                                            {% csrf_token %}
+                                            <button class="danger-btn" type="submit">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -336,7 +382,7 @@
                                 <td>{{ entry.title }}</td>
                                 <td>{{ entry.sheet.name }}</td>
                                 <td>{{ entry.get_entry_type_display }}</td>
-                                <td>{{ entry.amount }}</td>
+                                <td>{{ entry.amount }} {{ entry.sheet.currency }}</td>
                                 <td>{{ entry.get_status_display }}</td>
                             </tr>
                         {% endfor %}
@@ -361,7 +407,7 @@
                         {% for row in monthly_summary %}
                             <div class="insight-row">
                                 <span>{{ row.month|date:'F Y' }}</span>
-                                <span>+{{ row.income_total }} / -{{ row.expense_total }}</span>
+                                <span>+{{ row.income_total }} / -{{ row.expense_total }} {% if dashboard_currency_hint == 'MULTI' %}(multi-devise){% else %}({{ dashboard_currency_hint }}){% endif %}</span>
                             </div>
                         {% endfor %}
                     </div>
@@ -380,7 +426,7 @@
                         {% for row in category_breakdown %}
                             <div class="insight-row">
                                 <span>{{ row.label }}</span>
-                                <span>{{ row.total }} pour {{ row.movement_count }} mouvement{{ row.movement_count|pluralize }}</span>
+                                <span>{{ row.total }} {% if dashboard_currency_hint == 'MULTI' %}(multi-devise){% else %}({{ dashboard_currency_hint }}){% endif %} pour {{ row.movement_count }} mouvement{{ row.movement_count|pluralize }}</span>
                             </div>
                         {% endfor %}
                     </div>

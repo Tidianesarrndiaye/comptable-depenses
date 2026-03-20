@@ -33,7 +33,7 @@
         p { color: var(--muted); }
         form { display: grid; gap: 18px; }
         label { display: block; font-weight: 600; margin-bottom: 6px; }
-        input {
+        input, select {
             width: 100%;
             padding: 12px 14px;
             border-radius: 14px;
@@ -66,7 +66,7 @@
 <body>
     <main>
         <section class="panel">
-            <h1>Creer une feuille de depenses</h1>
+            <h1>{% if sheet %}Modifier la feuille de depenses{% else %}Creer une feuille de depenses{% endif %}</h1>
             <p>Cette feuille servira de support a vos depenses, gains et modeles recurrents.</p>
             <form method="post">
                 {% csrf_token %}
@@ -74,6 +74,11 @@
                     <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
                     {{ form.name }}
                     {{ form.name.errors }}
+                </div>
+                <div>
+                    <label for="{{ form.currency.id_for_label }}">{{ form.currency.label }}</label>
+                    {{ form.currency }}
+                    {{ form.currency.errors }}
                 </div>
                 <div>
                     <label for="{{ form.starting_balance.id_for_label }}">{{ form.starting_balance.label }}</label>

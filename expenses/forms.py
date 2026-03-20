@@ -8,12 +8,21 @@ from .models import Entry, EntryStatus, ExpenseSheet, RecurringEntryTemplate
 class ExpenseSheetForm(forms.ModelForm):
 	class Meta:
 		model = ExpenseSheet
-		fields = ['name', 'starting_balance', 'is_active']
+		fields = ['name', 'currency', 'starting_balance', 'is_active']
 		labels = {
 			'name': 'Nom de la feuille',
+			'currency': 'Devise',
 			'starting_balance': 'Solde initial',
 			'is_active': 'Feuille active',
 		}
+
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.fields['currency'].initial = ExpenseSheet._meta.get_field('currency').default
+		self.fields['currency'].required = False
+
+	def clean_currency(self):
+		return self.cleaned_data.get('currency') or ExpenseSheet._meta.get_field('currency').default
 
 
 class EntryForm(forms.ModelForm):
