@@ -1,9 +1,12 @@
+import csv
 from decimal import Decimal
 
 from django.contrib import messages
 from django.db.models import Case, Count, DecimalField, F, Sum, Value, When
 from django.db.models.functions import Coalesce, TruncMonth
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
+from openpyxl import Workbook
 
 from .forms import EntryForm, ExpenseSheetForm, RecurringEntryTemplateForm
 from .models import Entry, EntryCategory, EntryStatus, EntryType, ExpenseSheet, RecurringEntryTemplate
@@ -43,6 +46,38 @@ def build_financial_summary(entries):
 			Value(Decimal('0.00')),
 		),
 	)
+
+
+def get_filtered_entries(request):
+	entries = Entry.objects.select_related('sheet').all()
+	selected_sheet = request.GET.get('sheet', '').strip()
+	selected_type = request.GET.get('entry_type', '').strip()
+	selected_category = request.GET.get('category', '').strip()
+	selected_status = request.GET.get('status', '').strip()
+	date_from = request.GET.get('date_from', '').strip()
+	date_to = request.GET.get('date_to', '').strip()
+
+	if selected_sheet:
+		entries = entries.filter(sheet_id=selected_sheet)
+	if selected_type:
+		entries = entries.filter(entry_type=selected_type)
+	if selected_category:
+		entries = entries.filter(category=selected_category)
+	if selected_status:
+		entries = entries.filter(status=selected_status)
+	if date_from:
+		entries = entries.filter(entry_date__gte=date_from)
+	if date_to:
+		entries = entries.filter(entry_date__lte=date_to)
+
+	return entries, {
+		'selected_sheet': selected_sheet,
+		'selected_type': selected_type,
+		'selected_category': selected_category,
+		'selected_status': selected_status,
+		'date_from': date_from,
+		'date_to': date_to,
+	}
 
 
 def home(request):
@@ -124,26 +159,7 @@ def entry_create(request):
 
 
 def entry_list(request):
-	entries = Entry.objects.select_related('sheet').all()
-	selected_sheet = request.GET.get('sheet', '').strip()
-	selected_type = request.GET.get('entry_type', '').strip()
-	selected_category = request.GET.get('category', '').strip()
-	selected_status = request.GET.get('status', '').strip()
-	date_from = request.GET.get('date_from', '').strip()
-	date_to = request.GET.get('date_to', '').strip()
-
-	if selected_sheet:
-		entries = entries.filter(sheet_id=selected_sheet)
-	if selected_type:
-		entries = entries.filter(entry_type=selected_type)
-	if selected_category:
-		entries = entries.filter(category=selected_category)
-	if selected_status:
-		entries = entries.filter(status=selected_status)
-	if date_from:
-		entries = entries.filter(entry_date__gte=date_from)
-	if date_to:
-		entries = entries.filter(entry_date__lte=date_to)
+	entries, filters = get_filtered_entries(request)
 
 	financial_summary = build_financial_summary(entries.filter(status=EntryStatus.VALIDATED))
 	context = {
@@ -158,14 +174,63 @@ def entry_list(request):
 		'entry_type_choices': EntryType.choices,
 		'category_choices': EntryCategory.choices,
 		'status_choices': EntryStatus.choices,
-		'selected_sheet': selected_sheet,
-		'selected_type': selected_type,
-		'selected_category': selected_category,
-		'selected_status': selected_status,
-		'date_from': date_from,
-		'date_to': date_to,
+		'active_query': request.GET.urlencode(),
 	}
+	context.update(filters)
 	return render(request, 'expenses/entry_list.html', context)
+
+
+def export_entries_csv(request):
+	entries, _ = get_filtered_entries(request)
+	response = HttpResponse(content_type='text/csv')
+	response['Content-Disposition'] = 'attachment; filename="mouvements.csv"'
+
+	writer = csv.writer(response)
+	writer.writerow(['Date', 'Titre', 'Feuille', 'Type', 'Categorie', 'Montant', 'Statut', 'Date effective'])
+	for entry in entries:
+		writer.writerow(
+			[
+				entry.entry_date,
+				entry.title,
+				entry.sheet.name,
+				entry.get_entry_type_display(),
+				entry.get_category_display(),
+				entry.amount,
+				entry.get_status_display(),
+				entry.effective_date or '',
+			]
+		)
+
+	return response
+
+
+def export_entries_excel(request):
+	entries, _ = get_filtered_entries(request)
+	workbook = Workbook()
+	worksheet = workbook.active
+	worksheet.title = 'Mouvements'
+	worksheet.append(['Date', 'Titre', 'Feuille', 'Type', 'Categorie', 'Montant', 'Statut', 'Date effective'])
+
+	for entry in entries:
+		worksheet.append(
+			[
+				entry.entry_date.isoformat(),
+				entry.title,
+				entry.sheet.name,
+				entry.get_entry_type_display(),
+				entry.get_category_display(),
+				float(entry.amount),
+				entry.get_status_display(),
+				entry.effective_date.isoformat() if entry.effective_date else '',
+			]
+		)
+
+	response = HttpResponse(
+		content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+	)
+	response['Content-Disposition'] = 'attachment; filename="mouvements.xlsx"'
+	workbook.save(response)
+	return response
 
 
 def recurring_template_create(request):
