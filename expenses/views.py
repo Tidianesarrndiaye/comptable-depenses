@@ -213,6 +213,7 @@ def export_entries_csv(request):
 	entries, _ = get_filtered_entries(request)
 	response = HttpResponse(content_type='text/csv')
 	response['Content-Disposition'] = 'attachment; filename="mouvements.csv"'
+	response.write('\ufeff')
 
 	writer = csv.writer(response)
 	writer.writerow(['Date', 'Titre', 'Feuille', 'Type', 'Categorie', 'Montant', 'Statut', 'Date effective'])

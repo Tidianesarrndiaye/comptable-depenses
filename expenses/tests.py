@@ -283,6 +283,26 @@ class CreationFlowTests(TestCase):
 
 
 class ExportTests(TestCase):
+	def test_csv_export_uses_utf8_bom_for_excel_and_keeps_accents(self):
+		sheet = ExpenseSheet.objects.create(name='Budget depenses')
+		Entry.objects.create(
+			sheet=sheet,
+			title='Dépenses été',
+			entry_type=EntryType.EXPENSE,
+			category=EntryCategory.OTHER,
+			amount=Decimal('12.50'),
+			entry_date='2026-03-24',
+			status=EntryStatus.VALIDATED,
+			description='Dépenses avec accents: dépenses, été, élève',
+		)
+
+		response = self.client.get(reverse('expenses:entry-export-csv'))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertTrue(response.content.startswith(b'\xef\xbb\xbf'))
+		body = response.content.decode('utf-8-sig')
+		self.assertIn('Dépenses été', body)
+
 	def test_csv_export_respects_filters(self):
 		sheet = ExpenseSheet.objects.create(name='Budget export')
 		Entry.objects.create(
