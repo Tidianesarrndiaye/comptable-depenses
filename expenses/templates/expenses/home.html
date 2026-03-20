@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comptable Depenses</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f6efe5;
+            --panel: #fffaf4;
+            --ink: #1d1d1b;
+            --muted: #5e5a55;
+            --line: #dccfbe;
+            --accent: #136f63;
+            --accent-2: #f4a261;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            background:
+                radial-gradient(circle at top left, rgba(244, 162, 97, 0.30), transparent 28%),
+                linear-gradient(180deg, #fcf8f2 0%, var(--bg) 100%);
+            color: var(--ink);
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 48px 20px 72px;
+        }
+
+        .hero {
+            display: grid;
+            gap: 18px;
+            margin-bottom: 32px;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.4rem, 5vw, 4.8rem);
+            line-height: 0.95;
+            margin: 0;
+            max-width: 10ch;
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 65ch;
+            color: var(--muted);
+            font-size: 1.05rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin: 28px 0 38px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 14px 40px rgba(29, 29, 27, 0.06);
+        }
+
+        .card strong {
+            display: block;
+            font-size: 2rem;
+            margin-top: 8px;
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .section-title h2 {
+            margin: 0;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            color: var(--ink);
+            text-decoration: none;
+        }
+
+        .action-link.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fffaf4;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(19, 111, 99, 0.10);
+            color: var(--accent);
+            font-size: 0.88rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--line);
+        }
+
+        th {
+            font-size: 0.9rem;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .empty {
+            padding: 24px;
+            background: var(--panel);
+            border: 1px dashed var(--line);
+            border-radius: 20px;
+            color: var(--muted);
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+            margin-top: 28px;
+        }
+
+        .insight {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 14px 40px rgba(29, 29, 27, 0.06);
+        }
+
+        .insight h3 {
+            margin-top: 0;
+            margin-bottom: 14px;
+        }
+
+        .insight-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .insight-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .insight-row:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        @media (max-width: 640px) {
+            main {
+                padding-top: 32px;
+            }
+
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                max-width: none;
+            }
+
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tr {
+                padding: 14px 16px;
+                border-bottom: 1px solid var(--line);
+            }
+
+            td {
+                padding: 6px 0;
+                border-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section class="hero">
+            <span class="pill">Base Django initialisee</span>
+            <h1>Suivi clair des depenses et des gains.</h1>
+            <p>
+                Cette premiere etape pose le noyau du projet: feuilles de depenses, entrees,
+                brouillons recurrents et un point d'entree visible pour continuer l'application.
+            </p>
+            <div class="actions">
+                <a class="action-link primary" href="{% url 'expenses:sheet-create' %}">Creer une feuille</a>
+                <a class="action-link" href="{% url 'expenses:entry-create' %}">Ajouter une entree</a>
+                <a class="action-link" href="{% url 'expenses:entry-list' %}">Voir les mouvements</a>
+                <a class="action-link" href="{% url 'expenses:template-create' %}">Gerer les modeles recurrents</a>
+            </div>
+        </section>
+
+        <section class="grid">
+            <article class="card">
+                <span>Feuilles</span>
+                <strong>{{ sheet_count }}</strong>
+            </article>
+            <article class="card">
+                <span>Entrees</span>
+                <strong>{{ entry_count }}</strong>
+            </article>
+            <article class="card">
+                <span>Entrees validees</span>
+                <strong>{{ validated_entry_count }}</strong>
+            </article>
+            <article class="card">
+                <span>Entrees planifiees</span>
+                <strong>{{ scheduled_entry_count }}</strong>
+            </article>
+            <article class="card">
+                <span>Modeles recurrents</span>
+                <strong>{{ template_count }}</strong>
+            </article>
+            <article class="card">
+                <span>Revenus valides</span>
+                <strong>{{ financial_summary.income_total }}</strong>
+            </article>
+            <article class="card">
+                <span>Depenses validees</span>
+                <strong>{{ financial_summary.expense_total }}</strong>
+            </article>
+            <article class="card">
+                <span>Net valide</span>
+                <strong>{{ financial_summary.net_total }}</strong>
+            </article>
+        </section>
+
+        <section>
+            <div class="section-title">
+                <h2>Feuilles recentes</h2>
+                <span class="pill">Admin disponible sur /admin/</span>
+            </div>
+
+            {% if latest_sheets %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Proprietaire</th>
+                            <th>Solde initial</th>
+                            <th>Entrees</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sheet in latest_sheets %}
+                            <tr>
+                                <td>{{ sheet.name }}</td>
+                                <td>{{ sheet.owner|default:'Aucun compte' }}</td>
+                                <td>{{ sheet.starting_balance }}</td>
+                                <td>{{ sheet.entry_total }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty">
+                    Aucune feuille n'a encore ete creee. La prochaine etape peut consister a ajouter
+                    les formulaires de creation et la saisie des depenses.
+                </div>
+            {% endif %}
+        </section>
+
+        <section style="margin-top: 28px;">
+            <div class="section-title">
+                <h2>Dernieres entrees</h2>
+                <span class="pill">Liste complete sur /entrees/</span>
+            </div>
+
+            {% if recent_entries %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Titre</th>
+                            <th>Feuille</th>
+                            <th>Type</th>
+                            <th>Montant</th>
+                            <th>Statut</th>
+                        </tr>
+                        </thead>
+                    <tbody>
+                        {% for entry in recent_entries %}
+                            <tr>
+                                <td>{{ entry.title }}</td>
+                                <td>{{ entry.sheet.name }}</td>
+                                <td>{{ entry.get_entry_type_display }}</td>
+                                <td>{{ entry.amount }}</td>
+                                <td>{{ entry.get_status_display }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty">
+                    Aucune entree n'a encore ete enregistree. Vous pouvez creer une feuille puis saisir
+                    une premiere depense ou un gain.
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="two-columns">
+            <article class="insight">
+                <div class="section-title">
+                    <h2>Vue mensuelle</h2>
+                    <span class="pill">6 derniers mois actifs</span>
+                </div>
+                {% if monthly_summary %}
+                    <div class="insight-list">
+                        {% for row in monthly_summary %}
+                            <div class="insight-row">
+                                <span>{{ row.month|date:'F Y' }}</span>
+                                <span>+{{ row.income_total }} / -{{ row.expense_total }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty">Aucune entree validee pour construire une vue mensuelle.</div>
+                {% endif %}
+            </article>
+
+            <article class="insight">
+                <div class="section-title">
+                    <h2>Categories dominantes</h2>
+                    <span class="pill">Entrees validees</span>
+                </div>
+                {% if category_breakdown %}
+                    <div class="insight-list">
+                        {% for row in category_breakdown %}
+                            <div class="insight-row">
+                                <span>{{ row.label }}</span>
+                                <span>{{ row.total }} pour {{ row.movement_count }} mouvement{{ row.movement_count|pluralize }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty">Aucune categorie n'est encore exploitable dans les statistiques.</div>
+                {% endif %}
+            </article>
+        </section>
+    </main>
+</body>
+</html>

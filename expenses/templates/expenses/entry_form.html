@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouvelle entree</title>
+    <style>
+        :root {
+            --bg: #eef4ee;
+            --panel: #fbfef9;
+            --ink: #1c241d;
+            --muted: #536057;
+            --line: #cad7cc;
+            --accent: #2d6a4f;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            background: linear-gradient(180deg, #f9fcf8 0%, var(--bg) 100%);
+            color: var(--ink);
+        }
+        main { max-width: 860px; margin: 0 auto; padding: 48px 20px 72px; }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 28px;
+        }
+        .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+        .field-full { grid-column: 1 / -1; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: #fff;
+            font: inherit;
+        }
+        textarea { min-height: 120px; resize: vertical; }
+        .actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+        button, a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--accent);
+            text-decoration: none;
+            font: inherit;
+        }
+        button { background: var(--accent); color: #fbfef9; cursor: pointer; }
+        a { color: var(--accent); background: transparent; }
+        .note { color: var(--muted); margin-bottom: 18px; }
+        .errorlist { color: #9f2a2a; margin: 6px 0 0; }
+        @media (max-width: 700px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section class="panel">
+            <h1>Ajouter une entree</h1>
+            <p class="note">Vous pouvez enregistrer une depense, un gain, un brouillon ou une entree planifiee.</p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="grid">
+                    <div>
+                        <label for="{{ form.sheet.id_for_label }}">{{ form.sheet.label }}</label>
+                        {{ form.sheet }}
+                        {{ form.sheet.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+                        {{ form.title }}
+                        {{ form.title.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.entry_type.id_for_label }}">{{ form.entry_type.label }}</label>
+                        {{ form.entry_type }}
+                        {{ form.entry_type.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+                        {{ form.category }}
+                        {{ form.category.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.amount.id_for_label }}">{{ form.amount.label }}</label>
+                        {{ form.amount }}
+                        {{ form.amount.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.entry_date.id_for_label }}">{{ form.entry_date.label }}</label>
+                        {{ form.entry_date }}
+                        {{ form.entry_date.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                        {{ form.status }}
+                        {{ form.status.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.effective_date.id_for_label }}">{{ form.effective_date.label }}</label>
+                        {{ form.effective_date }}
+                        {{ form.effective_date.errors }}
+                    </div>
+                    <div class="field-full">
+                        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                        {{ form.description }}
+                        {{ form.description.errors }}
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit">Enregistrer l'entree</button>
+                    <a href="{% url 'expenses:entry-list' %}">Voir les mouvements</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

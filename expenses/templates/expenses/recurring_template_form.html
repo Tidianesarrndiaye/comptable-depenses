@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modeles recurrents</title>
+    <style>
+        :root {
+            --bg: #eef0f8;
+            --panel: #fcfcff;
+            --ink: #191d2a;
+            --muted: #59617a;
+            --line: #d1d7ea;
+            --accent: #3155a4;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            background: linear-gradient(180deg, #f9faff 0%, var(--bg) 100%);
+            color: var(--ink);
+        }
+        main { max-width: 1100px; margin: 0 auto; padding: 48px 20px 72px; }
+        .layout { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 20px; }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 24px;
+        }
+        form { display: grid; gap: 16px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: #fff;
+            font: inherit;
+        }
+        textarea { min-height: 110px; resize: vertical; }
+        .checkbox-row { display: flex; align-items: center; gap: 10px; }
+        .checkbox-row input { width: auto; }
+        .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .actions a, .actions button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--accent);
+            text-decoration: none;
+            font: inherit;
+        }
+        .actions button { background: var(--accent); color: #fcfcff; cursor: pointer; }
+        .actions a { color: var(--accent); background: transparent; }
+        .template-list { display: grid; gap: 14px; }
+        .template-card { border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+        .template-card h3 { margin: 0 0 6px; }
+        .template-card p { color: var(--muted); margin: 0 0 10px; }
+        .meta { color: var(--muted); font-size: 0.95rem; }
+        .errorlist { color: #9f2a2a; margin: 6px 0 0; }
+        @media (max-width: 860px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Modeles recurrents et planification</h1>
+        <p>Cette page pose la logique de repetition: un modele enregistre peut generer une entree planifiee a la bonne date.</p>
+        <section class="layout">
+            <div class="panel">
+                <form method="post">
+                    {% csrf_token %}
+                    <div>
+                        <label for="{{ form.sheet.id_for_label }}">{{ form.sheet.label }}</label>
+                        {{ form.sheet }}
+                        {{ form.sheet.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                        {{ form.name }}
+                        {{ form.name.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.entry_type.id_for_label }}">{{ form.entry_type.label }}</label>
+                        {{ form.entry_type }}
+                        {{ form.entry_type.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+                        {{ form.category }}
+                        {{ form.category.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.amount.id_for_label }}">{{ form.amount.label }}</label>
+                        {{ form.amount }}
+                        {{ form.amount.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.day_of_month.id_for_label }}">{{ form.day_of_month.label }}</label>
+                        {{ form.day_of_month }}
+                        {{ form.day_of_month.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                        {{ form.description }}
+                        {{ form.description.errors }}
+                    </div>
+                    <div class="checkbox-row">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+                    </div>
+                    <div class="actions">
+                        <button type="submit">Enregistrer le modele</button>
+                        <a href="{% url 'expenses:home' %}">Accueil</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="panel">
+                <div class="actions" style="margin-bottom: 16px;">
+                    <form method="post" action="{% url 'expenses:generate-scheduled' %}">
+                        {% csrf_token %}
+                        <button type="submit">Generer les entrees planifiees</button>
+                    </form>
+                    <a href="{% url 'expenses:entry-list' %}">Voir les mouvements</a>
+                </div>
+
+                {% if templates %}
+                    <div class="template-list">
+                        {% for template in templates %}
+                            <article class="template-card">
+                                <h3>{{ template.name }}</h3>
+                                <p>{{ template.description|default:'Aucune description.' }}</p>
+                                <div class="meta">
+                                    Feuille: {{ template.sheet.name }}<br>
+                                    Type: {{ template.get_entry_type_display }}<br>
+                                    Categorie: {{ template.get_category_display }}<br>
+                                    Montant: {{ template.amount }}<br>
+                                    Prochaine date cible: {{ template.next_due_date }}
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="meta">Aucun modele recurrent actif pour le moment.</p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>

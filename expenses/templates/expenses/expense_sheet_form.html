@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouvelle feuille</title>
+    <style>
+        :root {
+            --bg: #f6efe5;
+            --panel: #fffaf4;
+            --ink: #1d1d1b;
+            --muted: #5e5a55;
+            --line: #dccfbe;
+            --accent: #136f63;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            background: linear-gradient(180deg, #fcf8f2 0%, var(--bg) 100%);
+            color: var(--ink);
+        }
+        main { max-width: 780px; margin: 0 auto; padding: 48px 20px 72px; }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 14px 40px rgba(29, 29, 27, 0.06);
+        }
+        h1 { margin-top: 0; }
+        p { color: var(--muted); }
+        form { display: grid; gap: 18px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; }
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: #fff;
+            font: inherit;
+        }
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .checkbox-row input { width: auto; }
+        .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        button, a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--accent);
+            text-decoration: none;
+            font: inherit;
+        }
+        button { background: var(--accent); color: #fffaf4; cursor: pointer; }
+        a { color: var(--accent); background: transparent; }
+        .errorlist { color: #9f2a2a; margin: 6px 0 0; }
+    </style>
+</head>
+<body>
+    <main>
+        <section class="panel">
+            <h1>Creer une feuille de depenses</h1>
+            <p>Cette feuille servira de support a vos depenses, gains et modeles recurrents.</p>
+            <form method="post">
+                {% csrf_token %}
+                <div>
+                    <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                    {{ form.name }}
+                    {{ form.name.errors }}
+                </div>
+                <div>
+                    <label for="{{ form.starting_balance.id_for_label }}">{{ form.starting_balance.label }}</label>
+                    {{ form.starting_balance }}
+                    {{ form.starting_balance.errors }}
+                </div>
+                <div class="checkbox-row">
+                    {{ form.is_active }}
+                    <label for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+                </div>
+                <div class="actions">
+                    <button type="submit">Enregistrer la feuille</button>
+                    <a href="{% url 'expenses:home' %}">Retour a l'accueil</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
