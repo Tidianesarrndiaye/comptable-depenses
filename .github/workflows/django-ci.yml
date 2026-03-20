@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: ${{ secrets.SECRET_KEY || 'ci-test-secret-key' }}
+      DEBUG: "False"
 
     steps:
       - name: Checkout repository
@@ -26,11 +29,9 @@ jobs:
           pip install -r requirements.txt
 
       - name: Create CI environment file
-        env:
-          SECRET_KEY_FROM_GITHUB: ${{ secrets.SECRET_KEY }}
         run: |
-          echo "SECRET_KEY=${SECRET_KEY_FROM_GITHUB:-ci-test-secret-key}" > .env
-          echo "DEBUG=False" >> .env
+          echo "SECRET_KEY=${SECRET_KEY}" > .env
+          echo "DEBUG=${DEBUG}" >> .env
 
       - name: Run migrations
         run: python manage.py migrate --noinput
