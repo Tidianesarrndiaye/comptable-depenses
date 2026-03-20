@@ -289,8 +289,8 @@
                     <thead>
                         <tr>
                             <th>Nom</th>
-                            <th>Proprietaire</th>
                             <th>Solde initial</th>
+                            <th>Solde courant</th>
                             <th>Entrees</th>
                         </tr>
                     </thead>
@@ -298,8 +298,8 @@
                         {% for sheet in latest_sheets %}
                             <tr>
                                 <td>{{ sheet.name }}</td>
-                                <td>{{ sheet.owner|default:'Aucun compte' }}</td>
                                 <td>{{ sheet.starting_balance }}</td>
+                                <td>{{ sheet.current_balance }}</td>
                                 <td>{{ sheet.entry_total }}</td>
                             </tr>
                         {% endfor %}

@@ -50,12 +50,20 @@ class EntryForm(forms.ModelForm):
 		super().__init__(*args, **kwargs)
 		self.fields['entry_date'].initial = date.today
 		self.fields['status'].initial = EntryStatus.VALIDATED
+		self.fields['title'].required = False
 
 	def clean(self):
 		cleaned_data = super().clean()
-		status = cleaned_data.get('status')
+		title = (cleaned_data.get('title') or '').strip()
+		entry_type = cleaned_data.get('entry_type')
 		entry_date = cleaned_data.get('entry_date')
+		status = cleaned_data.get('status')
 		effective_date = cleaned_data.get('effective_date')
+
+		if not title:
+			type_label = dict(Entry._meta.get_field('entry_type').choices).get(entry_type, 'Mouvement')
+			date_label = entry_date.isoformat() if entry_date else date.today().isoformat()
+			cleaned_data['title'] = f'{type_label} du {date_label}'
 
 		if status == EntryStatus.SCHEDULED and not effective_date:
 			cleaned_data['effective_date'] = entry_date

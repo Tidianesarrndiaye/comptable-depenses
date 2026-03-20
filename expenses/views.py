@@ -160,6 +160,33 @@ def entry_create(request):
 
 def entry_list(request):
 	entries, filters = get_filtered_entries(request)
+	selected_sheet_obj = None
+	current_balance_total = Decimal('0.00')
+	if filters['selected_sheet']:
+		selected_sheet_obj = ExpenseSheet.objects.filter(pk=filters['selected_sheet']).first()
+		if selected_sheet_obj:
+			current_balance_total = selected_sheet_obj.current_balance
+	else:
+		total_starting = ExpenseSheet.objects.filter(is_active=True).aggregate(
+			total=Coalesce(Sum('starting_balance'), Value(Decimal('0.00')))
+		)['total']
+		total_movements = Entry.objects.filter(
+			sheet__is_active=True,
+			status=EntryStatus.VALIDATED,
+		).aggregate(
+			total=Coalesce(
+				Sum(
+					Case(
+						When(entry_type=EntryType.INCOME, then=F('amount')),
+						When(entry_type=EntryType.EXPENSE, then=F('amount') * Value(-1)),
+						default=Value(Decimal('0.00')),
+						output_field=DecimalField(max_digits=12, decimal_places=2),
+					)
+				),
+				Value(Decimal('0.00')),
+			)
+		)['total']
+		current_balance_total = total_starting + total_movements
 
 	financial_summary = build_financial_summary(entries.filter(status=EntryStatus.VALIDATED))
 	context = {
@@ -175,6 +202,8 @@ def entry_list(request):
 		'category_choices': EntryCategory.choices,
 		'status_choices': EntryStatus.choices,
 		'active_query': request.GET.urlencode(),
+		'selected_sheet_obj': selected_sheet_obj,
+		'current_balance_total': current_balance_total,
 	}
 	context.update(filters)
 	return render(request, 'expenses/entry_list.html', context)
