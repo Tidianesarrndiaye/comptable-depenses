@@ -196,6 +196,16 @@
                 <strong>{{ net_total }}</strong>
                 <small>Revenus moins depenses sur la selection</small>
             </article>
+            <article class="card">
+                {% if selected_sheet_obj %}
+                    <span>Solde courant de {{ selected_sheet_obj.name }}</span>
+                    <small>Solde initial avec toutes les entrees validees de la feuille</small>
+                {% else %}
+                    <span>Solde courant total</span>
+                    <small>Somme des soldes courants de toutes les feuilles actives</small>
+                {% endif %}
+                <strong>{{ current_balance_total }}</strong>
+            </article>
         </section>
 
         {% if entries %}

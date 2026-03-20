@@ -56,6 +56,62 @@ class HomeViewTests(TestCase):
 		self.assertContains(response, 'Courses')
 		self.assertNotContains(response, 'Prime draft')
 
+	def test_entry_list_displays_current_balance_for_filtered_sheet(self):
+		sheet = ExpenseSheet.objects.create(name='Budget principal', starting_balance=Decimal('100.00'))
+		Entry.objects.create(
+			sheet=sheet,
+			title='Salaire',
+			entry_type=EntryType.INCOME,
+			category=EntryCategory.OTHER,
+			amount=Decimal('250.00'),
+			entry_date='2026-03-20',
+			status=EntryStatus.VALIDATED,
+		)
+		Entry.objects.create(
+			sheet=sheet,
+			title='Courses',
+			entry_type=EntryType.EXPENSE,
+			category=EntryCategory.FOOD,
+			amount=Decimal('40.00'),
+			entry_date='2026-03-20',
+			status=EntryStatus.VALIDATED,
+		)
+
+		response = self.client.get(reverse('expenses:entry-list'), {'sheet': sheet.pk})
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'Solde courant de Budget principal')
+		self.assertContains(response, '310,00')
+
+	def test_entry_list_displays_total_current_balance_for_all_sheets(self):
+		sheet_one = ExpenseSheet.objects.create(name='Budget A', starting_balance=Decimal('100.00'))
+		sheet_two = ExpenseSheet.objects.create(name='Budget B', starting_balance=Decimal('50.00'))
+
+		Entry.objects.create(
+			sheet=sheet_one,
+			title='Gain A',
+			entry_type=EntryType.INCOME,
+			category=EntryCategory.OTHER,
+			amount=Decimal('40.00'),
+			entry_date='2026-03-20',
+			status=EntryStatus.VALIDATED,
+		)
+		Entry.objects.create(
+			sheet=sheet_two,
+			title='Depense B',
+			entry_type=EntryType.EXPENSE,
+			category=EntryCategory.FOOD,
+			amount=Decimal('10.00'),
+			entry_date='2026-03-20',
+			status=EntryStatus.VALIDATED,
+		)
+
+		response = self.client.get(reverse('expenses:entry-list'))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'Solde courant total')
+		self.assertContains(response, '<strong>180</strong>', html=True)
+
 	def test_home_page_displays_analytics_sections(self):
 		sheet = ExpenseSheet.objects.create(name='Budget maison')
 		Entry.objects.create(
@@ -73,6 +129,41 @@ class HomeViewTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, 'Vue mensuelle')
 		self.assertContains(response, 'Categories dominantes')
+
+	def test_home_page_displays_current_balance_for_sheet(self):
+		sheet = ExpenseSheet.objects.create(name='Budget principal', starting_balance=Decimal('100.00'))
+		Entry.objects.create(
+			sheet=sheet,
+			title='Salaire',
+			entry_type=EntryType.INCOME,
+			category=EntryCategory.OTHER,
+			amount=Decimal('250.00'),
+			entry_date='2026-03-20',
+			status=EntryStatus.VALIDATED,
+		)
+		Entry.objects.create(
+			sheet=sheet,
+			title='Courses',
+			entry_type=EntryType.EXPENSE,
+			category=EntryCategory.FOOD,
+			amount=Decimal('40.00'),
+			entry_date='2026-03-20',
+			status=EntryStatus.VALIDATED,
+		)
+
+		response = self.client.get(reverse('expenses:home'))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, '310,00')
+
+	def test_home_page_hides_owner_column_for_sheets(self):
+		ExpenseSheet.objects.create(name='Budget sans compte', starting_balance=Decimal('50.00'))
+
+		response = self.client.get(reverse('expenses:home'))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertNotContains(response, 'Proprietaire')
+		self.assertNotContains(response, 'Aucun compte')
 
 
 class ExpenseSheetBalanceTests(TestCase):
