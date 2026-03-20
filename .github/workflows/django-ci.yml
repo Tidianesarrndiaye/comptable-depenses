@@ -25,6 +25,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Create CI environment file
+        env:
+          SECRET_KEY_FROM_GITHUB: ${{ secrets.SECRET_KEY }}
+        run: |
+          echo "SECRET_KEY=${SECRET_KEY_FROM_GITHUB:-ci-test-secret-key}" > .env
+          echo "DEBUG=False" >> .env
+
       - name: Run migrations
         run: python manage.py migrate --noinput
 
