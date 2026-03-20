@@ -167,6 +167,24 @@ class HomeViewTests(TestCase):
 		self.assertNotContains(response, 'Proprietaire')
 		self.assertNotContains(response, 'Aucun compte')
 
+	def test_home_page_displays_currency_context_on_dashboard(self):
+		sheet = ExpenseSheet.objects.create(name='Budget EUR', currency='EUR', starting_balance=Decimal('10.00'))
+		Entry.objects.create(
+			sheet=sheet,
+			title='Vente',
+			entry_type=EntryType.INCOME,
+			category=EntryCategory.OTHER,
+			amount=Decimal('80.00'),
+			entry_date='2026-03-21',
+			status=EntryStatus.VALIDATED,
+		)
+
+		response = self.client.get(reverse('expenses:home'))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'Totaux affiches en EUR')
+		self.assertContains(response, '80,00 EUR')
+
 
 class ExpenseSheetBalanceTests(TestCase):
 	def test_current_balance_uses_only_validated_entries(self):
@@ -210,6 +228,7 @@ class CreationFlowTests(TestCase):
 			reverse('expenses:sheet-create'),
 			{
 				'name': 'Suivi familial',
+				'currency': 'MAD',
 				'starting_balance': '150.00',
 				'is_active': 'on',
 			},
@@ -217,6 +236,28 @@ class CreationFlowTests(TestCase):
 
 		self.assertEqual(response.status_code, 302)
 		self.assertTrue(ExpenseSheet.objects.filter(name='Suivi familial').exists())
+
+	def test_sheet_currency_defaults_to_mad(self):
+		sheet = ExpenseSheet.objects.create(name='Feuille devise par defaut')
+
+		self.assertEqual(sheet.currency, 'MAD')
+
+	def test_sheet_currency_can_be_updated(self):
+		sheet = ExpenseSheet.objects.create(name='Feuille a modifier', currency='MAD')
+
+		response = self.client.post(
+			reverse('expenses:sheet-update', args=[sheet.pk]),
+			{
+				'name': sheet.name,
+				'currency': 'EUR',
+				'starting_balance': '0.00',
+				'is_active': 'on',
+			},
+		)
+
+		self.assertEqual(response.status_code, 302)
+		sheet.refresh_from_db()
+		self.assertEqual(sheet.currency, 'EUR')
 
 	def test_scheduled_entry_can_be_created_from_form(self):
 		sheet = ExpenseSheet.objects.create(name='Budget principal')
@@ -280,6 +321,31 @@ class CreationFlowTests(TestCase):
 		self.assertTrue(created)
 		self.assertEqual(entry.status, EntryStatus.SCHEDULED)
 		self.assertEqual(str(entry.effective_date), '2026-03-25')
+
+	def test_entry_can_be_deleted(self):
+		sheet = ExpenseSheet.objects.create(name='Budget principal')
+		entry = Entry.objects.create(
+			sheet=sheet,
+			title='A supprimer',
+			entry_type=EntryType.EXPENSE,
+			category=EntryCategory.OTHER,
+			amount=Decimal('10.00'),
+			entry_date='2026-03-24',
+			status=EntryStatus.VALIDATED,
+		)
+
+		response = self.client.post(reverse('expenses:entry-delete', args=[entry.pk]))
+
+		self.assertEqual(response.status_code, 302)
+		self.assertFalse(Entry.objects.filter(pk=entry.pk).exists())
+
+	def test_sheet_can_be_deleted(self):
+		sheet = ExpenseSheet.objects.create(name='Feuille a supprimer')
+
+		response = self.client.post(reverse('expenses:sheet-delete', args=[sheet.pk]))
+
+		self.assertEqual(response.status_code, 302)
+		self.assertFalse(ExpenseSheet.objects.filter(pk=sheet.pk).exists())
 
 
 class ExportTests(TestCase):

@@ -5,11 +5,23 @@ from django.contrib import messages
 from django.db.models import Case, Count, DecimalField, F, Sum, Value, When
 from django.db.models.functions import Coalesce, TruncMonth
 from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 from openpyxl import Workbook
 
 from .forms import EntryForm, ExpenseSheetForm, RecurringEntryTemplateForm
-from .models import Entry, EntryCategory, EntryStatus, EntryType, ExpenseSheet, RecurringEntryTemplate
+from .models import Currency, Entry, EntryCategory, EntryStatus, EntryType, ExpenseSheet, RecurringEntryTemplate
+
+
+def get_currency_hint_for_active_sheets():
+	active_currencies = list(
+		ExpenseSheet.objects.filter(is_active=True).values_list('currency', flat=True).distinct()
+	)
+	if len(active_currencies) == 1:
+		return active_currencies[0]
+	if len(active_currencies) > 1:
+		return 'MULTI'
+	return Currency.MAD
 
 
 def build_financial_summary(entries):
@@ -83,6 +95,7 @@ def get_filtered_entries(request):
 def home(request):
 	validated_entries = Entry.objects.filter(status=EntryStatus.VALIDATED)
 	financial_summary = build_financial_summary(validated_entries)
+	dashboard_currency_hint = get_currency_hint_for_active_sheets()
 	monthly_summary = list(
 		validated_entries.annotate(month=TruncMonth('entry_date'))
 		.values('month')
@@ -125,6 +138,7 @@ def home(request):
 		'scheduled_entry_count': Entry.objects.filter(status=EntryStatus.SCHEDULED).count(),
 		'template_count': RecurringEntryTemplate.objects.count(),
 		'financial_summary': financial_summary,
+		'dashboard_currency_hint': dashboard_currency_hint,
 		'monthly_summary': monthly_summary,
 		'category_breakdown': category_breakdown,
 		'recent_entries': Entry.objects.select_related('sheet')[:5],
@@ -142,6 +156,18 @@ def expense_sheet_create(request):
 		return redirect('expenses:home')
 
 	return render(request, 'expenses/expense_sheet_form.html', {'form': form})
+
+
+def expense_sheet_update(request, pk):
+	sheet = get_object_or_404(ExpenseSheet, pk=pk)
+	form = ExpenseSheetForm(request.POST or None, instance=sheet)
+
+	if request.method == 'POST' and form.is_valid():
+		form.save()
+		messages.success(request, 'La feuille de depenses a ete mise a jour.')
+		return redirect('expenses:home')
+
+	return render(request, 'expenses/expense_sheet_form.html', {'form': form, 'sheet': sheet})
 
 
 def entry_create(request):
@@ -162,6 +188,7 @@ def entry_list(request):
 	entries, filters = get_filtered_entries(request)
 	selected_sheet_obj = None
 	current_balance_total = Decimal('0.00')
+	global_currency_hint = get_currency_hint_for_active_sheets()
 	if filters['selected_sheet']:
 		selected_sheet_obj = ExpenseSheet.objects.filter(pk=filters['selected_sheet']).first()
 		if selected_sheet_obj:
@@ -204,6 +231,8 @@ def entry_list(request):
 		'active_query': request.GET.urlencode(),
 		'selected_sheet_obj': selected_sheet_obj,
 		'current_balance_total': current_balance_total,
+		'global_currency_hint': global_currency_hint,
+		'currency_labels': dict(Currency.choices),
 	}
 	context.update(filters)
 	return render(request, 'expenses/entry_list.html', context)
@@ -291,6 +320,24 @@ def generate_scheduled_entries(request):
 
 		messages.success(request, f'{created_count} entree(s) planifiee(s) ont ete generee(s).')
 
+	return redirect('expenses:entry-list')
+
+
+@require_POST
+def expense_sheet_delete(request, pk):
+	sheet = get_object_or_404(ExpenseSheet, pk=pk)
+	sheet_name = sheet.name
+	sheet.delete()
+	messages.success(request, f'La feuille "{sheet_name}" a ete supprimee.')
+	return redirect('expenses:home')
+
+
+@require_POST
+def entry_delete(request, pk):
+	entry = get_object_or_404(Entry, pk=pk)
+	entry_title = entry.title
+	entry.delete()
+	messages.success(request, f'L entree "{entry_title}" a ete supprimee.')
 	return redirect('expenses:entry-list')
 
 # Create your views here.

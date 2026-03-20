@@ -40,6 +40,18 @@
             font: inherit;
         }
         .actions .primary { background: var(--accent); color: #fffdf9; }
+        .danger-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid #9f2a2a;
+            background: #fff5f5;
+            color: #9f2a2a;
+            font: inherit;
+            cursor: pointer;
+        }
         .filters {
             display: grid;
             grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -186,17 +198,17 @@
             <article class="card">
                 <span>Revenus valides</span>
                 <strong>{{ income_total }}</strong>
-                <small>Somme des gains valides apres filtres</small>
+                <small>Somme des gains valides apres filtres{% if selected_sheet_obj %} ({{ selected_sheet_obj.currency }}){% else %} {% if global_currency_hint == 'MULTI' %}(multi-devise){% else %}({{ global_currency_hint }}){% endif %}{% endif %}</small>
             </article>
             <article class="card">
                 <span>Depenses valides</span>
                 <strong>{{ expense_total }}</strong>
-                <small>Somme des depenses valides apres filtres</small>
+                <small>Somme des depenses valides apres filtres{% if selected_sheet_obj %} ({{ selected_sheet_obj.currency }}){% else %} {% if global_currency_hint == 'MULTI' %}(multi-devise){% else %}({{ global_currency_hint }}){% endif %}{% endif %}</small>
             </article>
             <article class="card">
                 <span>Net valide</span>
                 <strong>{{ net_total }}</strong>
-                <small>Revenus moins depenses sur la selection</small>
+                <small>Revenus moins depenses sur la selection{% if selected_sheet_obj %} ({{ selected_sheet_obj.currency }}){% else %} {% if global_currency_hint == 'MULTI' %}(multi-devise){% else %}({{ global_currency_hint }}){% endif %}{% endif %}</small>
             </article>
             <article class="card">
                 {% if selected_sheet_obj %}
@@ -204,9 +216,9 @@
                     <small>Solde initial avec toutes les entrees validees de la feuille</small>
                 {% else %}
                     <span>Solde courant total</span>
-                    <small>Somme des soldes courants de toutes les feuilles actives</small>
+                    <small>Somme des soldes courants de toutes les feuilles actives {% if global_currency_hint == 'MULTI' %}(multi-devise){% else %}({{ global_currency_hint }}){% endif %}</small>
                 {% endif %}
-                <strong>{{ current_balance_total }}</strong>
+                <strong>{{ current_balance_total }}{% if selected_sheet_obj %} {{ selected_sheet_obj.currency }}{% endif %}</strong>
             </article>
         </section>
 
@@ -222,6 +234,7 @@
                         <th>Montant</th>
                         <th>Statut</th>
                         <th>Date effective</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -233,10 +246,16 @@
                             <td>{{ entry.get_entry_type_display }}</td>
                             <td>{{ entry.get_category_display }}</td>
                             <td class="{% if entry.entry_type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
-                                {% if entry.entry_type == 'income' %}+{% else %}-{% endif %}{{ entry.amount }}
+                                {% if entry.entry_type == 'income' %}+{% else %}-{% endif %}{{ entry.amount }} {{ entry.sheet.currency }}
                             </td>
                             <td>{{ entry.get_status_display }}</td>
                             <td>{{ entry.effective_date|default:'-' }}</td>
+                            <td>
+                                <form method="post" action="{% url 'expenses:entry-delete' entry.pk %}">
+                                    {% csrf_token %}
+                                    <button class="danger-btn" type="submit">Supprimer</button>
+                                </form>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
