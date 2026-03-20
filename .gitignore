@@ -21,12 +21,23 @@ build/
 # Django
 db.sqlite3
 db.sqlite3-journal
+*.sqlite3
+*.sqlite3-journal
 media/
 staticfiles/
+local_settings.py
 
 # Environment and editor files
 .env
 .env.*
+!.env.example
+.envrc
+.direnv/
 .DS_Store
 .vscode/
 .idea/
+
+# Logs and secrets
+*.log
+*.pem
+*.key
